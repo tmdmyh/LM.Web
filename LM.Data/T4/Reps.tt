@@ -1,0 +1,63 @@
+﻿<#@ template language="C#" debug="True" #>
+<#@ output extension=".cs" #>
+<#@ Assembly Name="System.Core" #>
+<#@ Assembly Name="$(SolutionDir)\LM.Data\bin\Debug\LM.Data.dll" #>
+<#@ Assembly Name="$(SolutionDir)\LM.Core\bin\Debug\LM.Core.dll" #>
+<#@ import namespace="System.IO" #>
+<#@ Import Namespace="System.Linq" #>
+<#@ Import Namespace="System.Text" #>
+<#@ import namespace="System.Reflection" #>
+<#@ Import Namespace="System.Collections.Generic" #>
+<#@ import namespace="LM.Core.Data" #>
+
+<#@ include file="T4Toolbox.tt" #>
+<#@ include file="Include\ContextInitTemplate.ttinclude" #>
+<#@ include file="Include\CreateDatabaseIfNotExistsWithSeedTemplate.ttinclude" #>
+<#@ include file="Include\DependencyRegistrarTemplate.ttinclude" #>
+<#@ include file="Include\IDbsessionCollectionTemplate.ttinclude" #>
+<#@ include file="Include\DbsessionCollectionTemplate.ttinclude" #>
+<#@ include file="EF.Utility.CS.ttinclude"#>
+<#
+    string currentPath = Path.GetDirectoryName(Host.TemplateFile);
+    string solutionPath = currentPath.Substring(0, currentPath.IndexOf(@"\LM.Data"));
+    string directoryPath = currentPath.Substring(0, currentPath.IndexOf(@"\T4"));
+     string outFilePath =string.Format(@"{0}\{1}",directoryPath,@"Infrastructure\");
+
+	 string filePath =string.Format(@"{0}\{1}",directoryPath, @"bin\Debug\LM.Data.dll");
+    Assembly assembly =Assembly.LoadFrom(filePath);
+    IEnumerable<Type> modelTypes = assembly.GetTypes();
+    IEnumerable<Type> dbModelTypes = modelTypes.Where(a => typeof(DbContextBase).IsAssignableFrom(a)).ToList();
+
+    //创建db初始化类
+    foreach(Type dbModelType in dbModelTypes)
+    {
+    ContextInitTemplate irep= new ContextInitTemplate(dbModelType);
+    irep.Output.Encoding = Encoding.UTF8;
+    irep.RenderToFile(Path.Combine(outFilePath, irep.FileName+@".cs"));
+
+	//创建初始化数据库种子类
+	CreateDatabaseIfNotExistsWithSeedTemplate cSeed = new CreateDatabaseIfNotExistsWithSeedTemplate(dbModelType);
+	  cSeed.Output.Encoding = Encoding.UTF8;
+    cSeed.RenderToFile(Path.Combine(outFilePath, cSeed.FileName+@".cs"));
+    }
+
+	//IOC注册类
+	DependencyRegistrarTemplate drt = new DependencyRegistrarTemplate(dbModelTypes);
+	 drt.Output.Encoding = Encoding.UTF8;
+    drt.RenderToFile(Path.Combine(outFilePath, drt.FileName+@".cs"));
+
+	//IDbsession
+	 IEnumerable<Type> dataModels = modelTypes.Where(a => a.Namespace == "LM.Data.Models").ToList();
+	 IDbsessionCollectionTemplate ict = new IDbsessionCollectionTemplate(dataModels);
+	  ict.Output.Encoding = Encoding.UTF8;
+    ict.RenderToFile(Path.Combine(outFilePath, ict.FileName+@".cs"));
+
+	//Dbsession
+	 foreach(Type dbModelType in dbModelTypes)
+    {
+	   DbsessionCollectionTemplate dct = new DbsessionCollectionTemplate(dbModelType,dataModels);
+	     dct.Output.Encoding = Encoding.UTF8;
+	 dct.RenderToFile(Path.Combine(outFilePath, dct.FileName+@".cs"));
+	}
+
+#>

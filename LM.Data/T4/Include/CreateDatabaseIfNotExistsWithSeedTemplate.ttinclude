@@ -1,0 +1,53 @@
+﻿<#+
+    // <copyright file="IDbSession.tt" company="china">
+    //  Copyright © china. All Rights Reserved.
+    // </copyright>
+
+    public class CreateDatabaseIfNotExistsWithSeedTemplate : CSharpTemplate
+    {
+        private Type _itemType;
+
+        public CreateDatabaseIfNotExistsWithSeedTemplate(Type itemType)
+        {
+            _itemType = itemType;
+        }
+
+        /// <summary>
+        /// 获取 生成的文件名，根据模型名定义
+        /// </summary>
+        public string FileName
+        {
+            get
+            { 
+                return "CreateDatabaseIfNotExistsWithSeed"+_itemType.Name;
+            }
+        }
+
+        public override string TransformText()
+        {
+            base.TransformText();
+#>
+using System;
+using LM.Core.Data.Initializers;
+using LM.Core.Infrastructure;
+using LM.Core.Data.Migrations.Migrations;
+
+namespace LM.Data.Infrastructure
+{
+	 public partial class <#=FileName #> :CreateDatabaseIfNotExistsWithSeedBase<<#=_itemType.Name #>>
+    {
+       
+        public <#=FileName #>()
+        {
+            SeedActions.Add(new CreateDatabaseSeedAction());
+        }
+		
+          
+       }
+} 
+           
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>

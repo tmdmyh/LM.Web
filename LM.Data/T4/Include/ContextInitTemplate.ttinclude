@@ -1,0 +1,63 @@
+﻿<#+
+    // <copyright file="IDbSession.tt" company="china">
+    //  Copyright © china. All Rights Reserved.
+    // </copyright>
+
+    public class ContextInitTemplate : CSharpTemplate
+    {
+        private Type _itemType;
+
+        public ContextInitTemplate(Type itemType)
+        {
+            _itemType = itemType;
+        }
+
+        /// <summary>
+        /// 获取 生成的文件名，根据模型名定义
+        /// </summary>
+        public string FileName
+        {
+            get
+            { 
+                return _itemType.Name+"Init";
+            }
+        }
+
+        public override string TransformText()
+        {
+            base.TransformText();
+#>
+using System;
+using LM.Core.Data.Initializers;
+using LM.Core.Infrastructure;
+
+namespace LM.Data.Infrastructure
+{
+	 public partial class <#=FileName #> :DbContextInitializerBase<<#=_itemType.Name #>>, IStartupTask
+    {
+       
+        public <#=FileName #>()
+        {
+            CreateDatabaseInitializer = new CreateDatabaseIfNotExistsWithSeed<#=_itemType.Name  #>();
+        }
+		 public int Order
+        {
+            get
+            {
+                return 1;
+            }
+        }
+
+        public void Execute()
+        {
+            this.ContextInitialize();
+        }
+          
+       }
+} 
+           
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>

@@ -1,0 +1,73 @@
+﻿<#+
+    // <copyright file="IDbSession.tt" company="china">
+    //  Copyright © china. All Rights Reserved.
+    // </copyright>
+
+    public class DependencyRegistrarTemplate : CSharpTemplate
+    {
+        private IEnumerable<Type> _types;
+
+        public DependencyRegistrarTemplate(IEnumerable<Type> types)
+        {
+            _types = types;
+        }
+
+        /// <summary>
+        /// 获取 生成的文件名，根据模型名定义
+        /// </summary>
+        public string FileName
+        {
+            get
+            { 
+                return "DependencyRegistrar";
+            }
+        }
+
+        public override string TransformText()
+        {
+            base.TransformText();
+#>
+using System;
+using LM.Core.Data.Initializers;
+using LM.Core.Infrastructure;
+using LM.Core.Infrastructure.DependencyManagement;
+using System.Data.Entity;
+using Autofac;
+
+namespace LM.Data.Infrastructure
+{
+	 public partial class DependencyRegistrar :IDependencyRegistrar
+    {
+       
+       
+	 	  public virtual void Register(ContainerBuilder builder, ITypeFinder typeFinder)
+            {
+      <#+
+			 foreach (Type type in  _types)
+            {
+			#>
+			 builder.RegisterType<<#= type.Name #>>().As<DbContext>()
+               .PropertiesAutowired()
+              .InstancePerLifetimeScope().Keyed<DbContext>("<#= type.Name #>");
+		
+	     <#+ }#>
+           
+           
+        }
+		 public int Order
+        {
+            get
+            {
+                return 1;
+            }
+        }
+
+          
+       }
+} 
+           
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>

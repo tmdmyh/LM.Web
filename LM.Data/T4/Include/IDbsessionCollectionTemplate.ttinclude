@@ -1,0 +1,56 @@
+﻿<#+
+    // <copyright file="IDbSession.tt" company="china">
+    //  Copyright © china. All Rights Reserved.
+    // </copyright>
+
+    public class IDbsessionCollectionTemplate : CSharpTemplate
+    {
+        private IEnumerable<Type> _types;
+
+        public IDbsessionCollectionTemplate(IEnumerable<Type> types)
+        {
+            _types = types;
+        }
+
+        /// <summary>
+        /// 获取 生成的文件名，根据模型名定义
+        /// </summary>
+        public string FileName
+        {
+            get
+            { 
+                return "ILMRepCollection";
+            }
+        }
+
+        public override string TransformText()
+        {
+            base.TransformText();
+#>
+using System;
+using LM.Core.Data.Initializers;
+using LM.Core.Infrastructure;
+using LM.Core.Data;
+using LM.Data.Models;
+
+namespace LM.Data.Infrastructure
+{
+	 public partial interface <#=FileName #> : IDbSession
+    {
+       
+         <#+
+			 foreach (Type type in  _types)
+            {
+			#>
+			IRepository<<#=type.Name  #>> <#=type.Name  #>{get;}
+		
+	     <#+ }#>
+          
+     }
+} 
+           
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>

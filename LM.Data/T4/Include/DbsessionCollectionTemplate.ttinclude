@@ -1,0 +1,74 @@
+﻿<#+
+    // <copyright file="IDbSession.tt" company="china">
+    //  Copyright © china. All Rights Reserved.
+    // </copyright>
+
+    public class DbsessionCollectionTemplate : CSharpTemplate
+    {
+        private IEnumerable<Type> _types;
+	      private Type _dbType;
+
+        public DbsessionCollectionTemplate(Type dbType,IEnumerable<Type> types)
+        {
+            _types = types;
+			_dbType = dbType;
+        }
+
+        /// <summary>
+        /// 获取 生成的文件名，根据模型名定义
+        /// </summary>
+        public string FileName
+        {
+            get
+            { 
+                return _dbType.Name+"RepCollection";
+            }
+        }
+
+        public override string TransformText()
+        {
+            base.TransformText();
+#>
+using System;
+using LM.Core.Data.Initializers;
+using LM.Core.Infrastructure;
+using LM.Core.Data;
+using LM.Data.Models;
+using System.Data.Entity;
+using Autofac;
+
+namespace LM.Data.Infrastructure
+{
+	 public partial class <#=FileName #> :DbSessionBase, IDbSession
+    {
+        protected override void SetDbContext()
+        {
+            _db = EngineContext.Current.ResolveKeyed<DbContext>("<#=_dbType.Name  #>");
+        }
+         <#+
+			 foreach (Type type in  _types)
+            {
+			#>
+			private IRepository<<#=type.Name  #>> _<#=type.Name  #> = null;
+			public IRepository<<#=type.Name  #>> <#=type.Name  #>
+			{
+			get{
+			  if(_<#=type.Name  #> == null)
+			  {
+			    _<#=type.Name  #> = EngineContext.Current.Resolve<IRepository<<#=type.Name  #>>>(new NamedParameter("db", _db));
+				return _<#=type.Name  #>;
+			  }
+			  return _<#=type.Name  #>;
+			}
+			}
+		
+	     <#+ }#>
+          
+     }
+} 
+           
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>
